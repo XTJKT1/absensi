@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Display Absensi</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body{
+      background: linear-gradient(135deg,#0f172a,#1e293b);
+      font-family: 'Poppins', sans-serif;
+      overflow:hidden;
+    }
+
+    .glass{
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+
+    .animate-card{
+      animation: popup 0.5s ease;
+    }
+
+    @keyframes popup{
+      from{
+        transform: scale(0.7);
+        opacity:0;
+      }
+      to{
+        transform: scale(1);
+        opacity:1;
+      }
+    }
+  </style>
+</head>
+
+<body class="text-white h-screen p-5">
+
+  <div class="flex justify-between items-center mb-5">
+    <div>
+      <h1 class="text-4xl font-bold">
+        DISPLAY ABSENSI
+      </h1>
+
+      <p class="text-gray-300">
+        Sistem Absensi Realtime
+      </p>
+    </div>
+
+    <div id="clock" class="text-4xl font-bold"></div>
+  </div>
+
+  <div id="latestCard"
+       class="glass rounded-3xl p-10 text-center mb-5 animate-card">
+
+      <h2 class="text-2xl text-gray-300">
+        Menunggu Absensi...
+      </h2>
+  </div>
+
+  <div class="glass rounded-3xl p-5 h-[55vh] overflow-auto">
+    <h2 class="text-2xl font-bold mb-5">
+      Riwayat Absensi
+    </h2>
+
+    <table class="w-full">
+      <thead>
+        <tr class="text-left border-b border-gray-600">
+          <th class="p-3">Nama</th>
+          <th class="p-3">Kelas</th>
+          <th class="p-3">Waktu</th>
+          <th class="p-3">Status</th>
+        </tr>
+      </thead>
+
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwB9Fh3ANncgRvh0z18g49lz4ceLKuEDIB4JGUHI_Q7kEjcyzcWTffnWzyqzO1LXEQ4/exec";
+
+let lastDataLength = 0;
+
+function updateClock(){
+  const now = new Date();
+
+  document.getElementById("clock").innerHTML =
+    now.toLocaleTimeString("id-ID");
+}
+
+setInterval(updateClock,1000);
+
+function welcomeUser(name){
+
+  const speech = new SpeechSynthesisUtterance(
+    `Selamat datang ${name}`
+  );
+
+  speech.lang = "id-ID";
+  speech.rate = 0.9;
+
+  window.speechSynthesis.speak(speech);
+}
+
+async function loadData(){
+
+  try{
+
+    const response = await fetch(API_URL);
+    const data = await response.json();
+
+    const tableBody = document.getElementById("tableBody");
+
+    tableBody.innerHTML = "";
+
+    data.reverse();
+
+    data.forEach((item,index)=>{
+
+      tableBody.innerHTML += `
+        <tr class="border-b border-gray-700">
+          <td class="p-3">${item.nama}</td>
+          <td class="p-3">${item.kelas}</td>
+          <td class="p-3">
+            ${new Date(item.waktu).toLocaleTimeString("id-ID")}
+          </td>
+          <td class="p-3 text-green-400 font-bold">
+            ${item.status}
+          </td>
+        </tr>
+      `;
+
+      if(index === 0){
+
+        document.getElementById("latestCard").innerHTML = `
+          <div class="animate-card">
+            <h1 class="text-5xl font-bold mb-3">
+              ${item.nama}
+            </h1>
+
+            <p class="text-2xl text-blue-300">
+              ${item.kelas}
+            </p>
+
+            <div class="mt-5 text-green-400 text-3xl font-bold">
+              HADIR
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    if(data.length > lastDataLength){
+
+      const latest = data[0];
+
+      welcomeUser(latest.nama);
+
+      lastDataLength = data.length;
+    }
+
+  }catch(err){
+    console.log(err);
+  }
+}
+
+setInterval(loadData,2000);
+
+loadData();
+
+</script>
+
+</body>
+</html>
