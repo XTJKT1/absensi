@@ -86,9 +86,24 @@
     </table>
   </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwB9Fh3ANncgRvh0z18g49lz4ceLKuEDIB4JGUHI_Q7kEjcyzcWTffnWzyqzO1LXEQ4/exec";
+// --- Masukkan firebaseConfig Anda di sini ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBwgMx37DDpK6tT5OJgYvjXFJWjCcAPnl0",
+  authDomain: "absensi-e4d2c.firebaseapp.com",
+  databaseURL: "https://absensi-e4d2c-default-rtdb.firebaseio.com",
+  projectId: "absensi-e4d2c",
+  storageBucket: "absensi-e4d2c.firebasestorage.app",
+  messagingSenderId: "758152976558",
+  appId: "1:758152976558:web:5b4ff797c5f70aedde353f",
+  measurementId: "G-WQDWLMH3GB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 let lastDataLength = 0;
 
@@ -113,31 +128,24 @@ function welcomeUser(name){
   window.speechSynthesis.speak(speech);
 }
 
-async function loadData(){
+const attendanceRef = query(ref(db, 'absensi'), limitToLast(20));
 
-  try{
+onValue(attendanceRef, (snapshot) => {
+    const rawData = snapshot.val();
+    if (!rawData) return;
 
-    const response = await fetch(API_URL);
-    const data = await response.json();
-
+    // Konversi objek Firebase ke Array dan urutkan terbaru di atas
+    const data = Object.keys(rawData).map(key => rawData[key]).reverse();
     const tableBody = document.getElementById("tableBody");
-
     tableBody.innerHTML = "";
 
-    data.reverse();
-
     data.forEach((item,index)=>{
-
       tableBody.innerHTML += `
         <tr class="border-b border-gray-700">
           <td class="p-3">${item.nama}</td>
           <td class="p-3">${item.kelas}</td>
-          <td class="p-3">
-            ${new Date(item.waktu).toLocaleTimeString("id-ID")}
-          </td>
-          <td class="p-3 text-green-400 font-bold">
-            ${item.status}
-          </td>
+          <td class="p-3">${item.waktu}</td>
+          <td class="p-3 text-green-400 font-bold">HADIR</td>
         </tr>
       `;
 
@@ -169,15 +177,7 @@ async function loadData(){
 
       lastDataLength = data.length;
     }
-
-  }catch(err){
-    console.log(err);
-  }
-}
-
-setInterval(loadData,2000);
-
-loadData();
+});
 
 </script>
 
