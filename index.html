@@ -1,186 +1,184 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Display Absensi Digital Sekolah</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.tailwindcss.com"></script>
+  <title>Display Absensi</title>
 
-<style>
-body {
-background: linear-gradient(135deg, #0f172a, #1e293b);
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-overflow: hidden;
-}
+  <script src="https://cdn.tailwindcss.com"></script>
 
-.glass {
-background: rgba(255, 255, 255, 0.07);
-backdrop-filter: blur(12px);
-border: 1px solid rgba(255, 255, 255, 0.1);
-}
+  <style>
+    body{
+      background: linear-gradient(135deg,#0f172a,#1e293b);
+      font-family: 'Poppins', sans-serif;
+      overflow:hidden;
+    }
 
-.animate-card {
-animation: popup 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
+    .glass{
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,0.1);
+    }
 
-@keyframes popup {
-from {
-transform: scale(0.6);
-opacity: 0;
-}
-to {
-transform: scale(1);
-opacity: 1;
-}
-}
-</style>
+    .animate-card{
+      animation: popup 0.5s ease;
+    }
+
+    @keyframes popup{
+      from{
+        transform: scale(0.7);
+        opacity:0;
+      }
+      to{
+        transform: scale(1);
+        opacity:1;
+      }
+    }
+  </style>
 </head>
-<body class="text-white h-screen p-6 flex flex-col justify-between">
 
-<div class="flex justify-between items-center mb-4">
-<div>
-<h1 class="text-4xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-DISPLAY ABSENSI UTAMA
-</h1>
-<p class="text-gray-400 text-sm">
-Sistem Pemantauan Absensi Real-Time Sekolah
-</p>
-</div>
-<div id="clock" class="text-4xl font-mono font-bold bg-gray-800 px-6 py-2 rounded-2xl border border-gray-700 shadow-lg text-emerald-400">
-00:00:00
-</div>
-</div>
+<body class="text-white h-screen p-5">
 
-<div id="latestCard" class="glass rounded-3xl p-8 text-center flex flex-col items-center justify-center min-h-[30vh] transition-all duration-300">
-<div class="text-gray-400 text-xl tracking-wider animate-pulse">
-📢 Menunggu Siswa Menempelkan Kartu...
-</div>
-</div>
+  <div class="flex justify-between items-center mb-5">
+    <div>
+      <h1 class="text-4xl font-bold">
+        DISPLAY ABSENSI
+      </h1>
+      <div class="flex items-center gap-4 mt-1">
+        <p class="text-gray-300">
+          Sistem Absensi Realtime
+        </p>
+        <nav class="flex gap-2">
+          <a href="monitor.html" class="glass px-3 py-1 rounded-lg text-xs font-semibold hover:bg-white/20 transition-all border border-white/10">🖥️ Monitor</a>
+          <a href="register.html" class="glass px-3 py-1 rounded-lg text-xs font-semibold hover:bg-white/20 transition-all border border-white/10">📝 Registrasi</a>
+        </nav>
+      </div>
+    </div>
 
-<div class="glass rounded-3xl p-6 h-[48vh] flex flex-col">
-<h2 class="text-2xl font-bold mb-4 flex items-center gap-2 text-blue-400">
-<span>📋</span> Riwayat Kehadiran Hari Ini
-</h2>
+    <div id="clock" class="text-4xl font-bold"></div>
+  </div>
 
-<div class="overflow-auto flex-1 pr-2">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="text-gray-400 border-b border-gray-700 text-sm tracking-wider">
-<th class="pb-3 pl-2">NAMA SISWA</th>
-<th class="pb-3">KELAS</th>
-<th class="pb-3">WAKTU TAP</th>
-<th class="pb-3 text-center">STATUS</th>
-</tr>
-</thead>
-<tbody id="tableBody" class="divide-y divide-gray-800 text-base">
-</tbody>
-</table>
-</div>
-</div>
+  <div id="latestCard"
+       class="glass rounded-3xl p-10 text-center mb-5 animate-card">
+
+      <h2 class="text-2xl text-gray-300">
+        Menunggu Absensi...
+      </h2>
+  </div>
+
+  <div class="glass rounded-3xl p-5 h-[55vh] overflow-auto">
+    <h2 class="text-2xl font-bold mb-5">
+      Riwayat Absensi
+    </h2>
+
+    <table class="w-full">
+      <thead>
+        <tr class="text-left border-b border-gray-600">
+          <th class="p-3">Nama</th>
+          <th class="p-3">Kelas</th>
+          <th class="p-3">Waktu</th>
+          <th class="p-3">Status</th>
+        </tr>
+      </thead>
+
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
 
 <script>
-// --- KONFIGURASI API URL (Ganti dengan URL Apps Script Anda) ---
+
 const API_URL = "https://script.google.com/macros/s/AKfycbwB9Fh3ANncgRvh0z18g49lz4ceLKuEDIB4JGUHI_Q7kEjcyzcWTffnWzyqzO1LXEQ4/exec";
 
-// Menggunakan nilai trigger -1 agar tidak bersuara saat pertama kali halaman dimuat
-let lastDataLength = -1;
+let lastDataLength = 0;
 
-// Fungsi memperbarui jam digital di sudut kanan atas
 function updateClock(){
-const now = new Date();
-document.getElementById("clock").innerHTML = now.toLocaleTimeString("id-ID");
-}
-setInterval(updateClock, 1000);
+  const now = new Date();
 
-// Fungsi Text-To-Speech (HP Mengeluarkan Suara Selamat Datang)
+  document.getElementById("clock").innerHTML =
+    now.toLocaleTimeString("id-ID");
+}
+
+setInterval(updateClock,1000);
+
 function welcomeUser(name){
-// Hentikan suara yang sedang berjalan sebelumnya agar tidak bertumpuk jika antrean cepat
-window.speechSynthesis.cancel();
 
-const speech = new SpeechSynthesisUtterance(`Selamat datang, ${name}`);
-speech.lang = "id-ID";
-speech.rate = 0.95; // Kecepatan bicara normal sedikit santai
-window.speechSynthesis.speak(speech);
+  const speech = new SpeechSynthesisUtterance(
+    `Selamat datang ${name}`
+  );
+
+  speech.lang = "id-ID";
+  speech.rate = 0.9;
+
+  window.speechSynthesis.speak(speech);
 }
 
-// Fungsi utama mengambil data secara berkala dari Google Sheets
 async function loadData(){
-try{
-const response = await fetch(API_URL);
-const data = await response.json();
-const tableBody = document.getElementById("tableBody");
 
-// Jika data kosong di database
-if (data.length === 0) {
-lastDataLength = 0;
-return;
+  try{
+
+    const response = await fetch(API_URL);
+    const data = await response.json();
+
+    const tableBody = document.getElementById("tableBody");
+
+    tableBody.innerHTML = "";
+
+    data.reverse();
+
+    data.forEach((item,index)=>{
+
+      tableBody.innerHTML += `
+        <tr class="border-b border-gray-700">
+          <td class="p-3">${item.nama}</td>
+          <td class="p-3">${item.kelas}</td>
+          <td class="p-3">
+            ${new Date(item.waktu).toLocaleTimeString("id-ID")}
+          </td>
+          <td class="p-3 text-green-400 font-bold">
+            ${item.status}
+          </td>
+        </tr>
+      `;
+
+      if(index === 0){
+
+        document.getElementById("latestCard").innerHTML = `
+          <div class="animate-card">
+            <h1 class="text-5xl font-bold mb-3">
+              ${item.nama}
+            </h1>
+
+            <p class="text-2xl text-blue-300">
+              ${item.kelas}
+            </p>
+
+            <div class="mt-5 text-green-400 text-3xl font-bold">
+              HADIR
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    if(data.length > lastDataLength){
+
+      const latest = data[0];
+
+      welcomeUser(latest.nama);
+
+      lastDataLength = data.length;
+    }
+
+  }catch(err){
+    console.log(err);
+  }
 }
 
-tableBody.innerHTML = "";
+setInterval(loadData,2000);
 
-// Membalik data (Reverse) agar data absensi paling baru muncul di posisi paling atas
-const reversedData = [...data].reverse();
-
-reversedData.forEach((item, index) => {
-// Masukkan baris data ke dalam komponen tabel HTML
-tableBody.innerHTML += `
-<tr class="hover:bg-gray-800/30 transition-colors">
-<td class="py-3 pl-2 font-semibold text-gray-100">${item.nama}</td>
-<td class="py-3 text-blue-300">${item.kelas}</td>
-<td class="py-3 text-gray-400 font-mono">${item.waktu}</td>
-<td class="py-3 text-center">
-<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold">
-${item.status}
-</span>
-</td>
-</tr>
-`;
-
-// Jika indeks ke-0 (Data Terbaru), render di Komponen Card Besar Tengah
-if(index === 0){
-// --- LOGIKA FALLBACK GAMBAR JIKA DATA FOTO BELUM AKTIF ---
-// Sementara menggunakan avatar inisial huruf nama siswa
-const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.nama)}&background=38bdf8&color=fff&size=128`;
-
-document.getElementById("latestCard").innerHTML = `
-<div class="animate-card flex flex-col items-center">
-<div class="w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-400 shadow-xl mb-3">
-<img src="${avatarUrl}" alt="Foto Profil" class="w-full h-full object-cover">
-</div>
-<h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300 mb-1">
-${item.nama}
-</h1>
-<p class="text-xl text-blue-400 font-medium">${item.kelas}</p>
-<div class="mt-3 bg-emerald-500 text-slate-900 px-6 py-1 rounded-full text-lg font-black tracking-widest shadow-md">
-BERHASIL HADIR
-</div>
-</div>
-`;
-}
-});
-
-// --- MANAJEMEN STATE LOGIKA SUARA AGAR TIDAK EROR SAAT REFRESH ---
-if (lastDataLength === -1) {
-// Menyimpan total data awal sebagai patokan agar tidak berbunyi massal di awal load
-lastDataLength = data.length;
-} else if (data.length > lastDataLength) {
-// Suara hanya akan dipicu apabila ada pertambahan baris data baru dari ESP32
-const latestStudent = reversedData[0];
-welcomeUser(latestStudent.nama);
-lastDataLength = data.length;
-}
-
-} catch(err) {
-console.error("Gagal sinkronisasi data ke Google Sheets:", err);
-}
-}
-
-// Lakukan pemeriksaan berkala otomatis setiap 2 detik (Polling data)
-setInterval(loadData, 2000);
-
-// Jalankan fungsi pertama kali saat halaman web dimuat browser
 loadData();
+
 </script>
 
 </body>
