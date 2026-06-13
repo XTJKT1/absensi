@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Absensi Real-Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: linear-gradient(135deg, #0f172a, #1e293b); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="h-screen p-6 flex flex-col gap-6">
+    <!-- Header & Clock -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 uppercase tracking-tighter">Monitoring Kehadiran</h1>
+            <p class="text-gray-400 text-sm">Firebase Real-Time Stream</p>
+        </div>
+        <div id="clock" class="text-3xl font-mono font-bold bg-slate-800 px-5 py-2 rounded-xl border border-slate-700 text-emerald-400">00:00:00</div>
+    </div>
+
+    <!-- Latest Tap Display -->
+    <div id="displayArea" class="glass rounded-3xl p-10 flex flex-col items-center justify-center min-h-[35vh] transition-all">
+        <div class="text-slate-500 text-xl animate-pulse text-center">
+            <p class="text-5xl mb-4">📡</p>
+            Menunggu aktivitas sensor...
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="glass rounded-3xl p-6 flex-1 overflow-hidden flex flex-col">
+        <h2 class="text-xl font-bold mb-4 text-blue-400 flex items-center gap-2"><span>🕒</span> Riwayat Terkini</h2>
+        <div class="overflow-y-auto flex-1">
+            <table class="w-full text-left">
+                <thead class="sticky top-0 bg-slate-900 text-slate-400 text-xs uppercase tracking-widest">
+                    <tr>
+                        <th class="p-3">Nama Siswa</th>
+                        <th class="p-3">Kelas</th>
+                        <th class="p-3">Waktu</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-800">
+                    <!-- Data rows inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onChildAdded, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- KONFIGURASI FIREBASE (Ganti dengan milik Anda) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            databaseURL: "https://nama-project-anda-default-rtdb.firebaseio.com",
+            projectId: "nama-project-anda",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const attendanceRef = query(ref(db, 'absensi'), limitToLast(20));
+
+        function updateClock() {
+            document.getElementById("clock").innerText = new Date().toLocaleTimeString('id-ID');
+        }
+        setInterval(updateClock, 1000);
+
+        function speak(name) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(`Selamat datang, ${name}`);
+            msg.lang = 'id-ID';
+            window.speechSynthesis.speak(msg);
+        }
+
+        // Listener Real-time
+        onChildAdded(attendanceRef, (snapshot) => {
+            const data = snapshot.val();
+            const tableBody = document.getElementById("tableBody");
+            const displayArea = document.getElementById("displayArea");
+
+            // Tambah ke Tabel (Baris paling atas)
+            const row = `<tr class="animate-pop hover:bg-white/5">
+                <td class="p-3 font-bold">${data.nama}</td>
+                <td class="p-3 text-blue-300">${data.kelas}</td>
+                <td class="p-3 text-slate-400 font-mono text-sm">${data.waktu}</td>
+            </tr>`;
+            tableBody.insertAdjacentHTML('afterbegin', row);
+
+            // Update Display Utama
+            displayArea.innerHTML = `
+                <div class="animate-pop flex flex-col items-center">
+                    <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-full flex items-center justify-center text-4xl mb-4 shadow-lg shadow-emerald-500/20">
+                        ${data.nama.charAt(0)}
+                    </div>
+                    <h2 class="text-5xl font-black tracking-tighter mb-1">${data.nama}</h2>
+                    <p class="text-2xl text-emerald-400 font-medium tracking-wide uppercase">${data.kelas}</p>
+                    <div class="mt-4 px-4 py-1 bg-white/10 rounded-full text-xs text-slate-300">TERCATAT: ${data.waktu}</div>
+                </div>
+            `;
+            
+            speak(data.nama);
+        });
+    </script>
+</body>
+</html>
