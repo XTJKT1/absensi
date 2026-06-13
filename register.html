@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi Kartu Siswa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+        <h1 class="text-2xl font-bold mb-2">Registrasi Kartu</h1>
+        <p class="text-slate-400 text-sm mb-6">Hubungkan UID kartu ke identitas siswa</p>
+
+        <form id="regForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">UID Kartu (HEX)</label>
+                <input type="text" id="uid" placeholder="Contoh: 04677A22" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 focus:border-blue-500 outline-none transition" required>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nama Lengkap</label>
+                <input type="text" id="nama" placeholder="Masukkan nama siswa" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 focus:border-blue-500 outline-none transition" required>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kelas / Jabatan</label>
+                <input type="text" id="kelas" placeholder="Contoh: XI - RPL" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 focus:border-blue-500 outline-none transition" required>
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
+                Simpan Data Siswa
+            </button>
+        </form>
+        
+        <div id="msg" class="mt-4 text-center text-sm hidden p-3 rounded-xl"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            databaseURL: "https://nama-project-anda-default-rtdb.firebaseio.com",
+            projectId: "nama-project-anda",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const form = document.getElementById('regForm');
+        const msgDiv = document.getElementById('msg');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const uid = document.getElementById('uid').value.toUpperCase().replace(/\s/g, '');
+            const nama = document.getElementById('nama').value;
+            const kelas = document.getElementById('kelas').value;
+
+            try {
+                await set(ref(db, 'siswa/' + uid), {
+                    nama: nama,
+                    kelas: kelas,
+                    registeredAt: new Date().toISOString()
+                });
+                
+                showMsg("Berhasil! Kartu " + uid + " terdaftar.", "bg-emerald-500/20 text-emerald-400");
+                form.reset();
+            } catch (error) {
+                showMsg("Gagal: " + error.message, "bg-red-500/20 text-red-400");
+            }
+        };
+
+        function showMsg(text, classes) {
+            msgDiv.innerText = text;
+            msgDiv.className = "mt-4 text-center text-sm p-3 rounded-xl " + classes;
+            msgDiv.classList.remove('hidden');
+            setTimeout(() => msgDiv.classList.add('hidden'), 5000);
+        }
+    </script>
+</body>
+</html>
