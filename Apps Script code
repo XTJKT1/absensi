@@ -1,0 +1,170 @@
+var SS = SpreadsheetApp.getActiveSpreadsheet();
+var sheetData = SS.getSheetByName("DataSiswa"); // A:UID, B:Nama, C:Kelas, ... F:Foto (link Google Drive)
+var sheetLog = SS.getSheetByName("Absensi");    // A:Nama, B:Kelas, C:Waktu, D:Status
+
+// Batas waktu
+var BATAS_JAM_TELAT = 8;   // jam 8 pagi
+var BATAS_MENIT_TELAT = 0;
+
+var BATAS_JAM_PULANG = 14; // jam 2 siang
+var BATAS_MENIT_PULANG = 0;
+
+// Kolom foto di sheet DataSiswa (F = index 5, mulai dari 0)
+var KOLOM_FOTO_INDEX = 5;
+
+// -------------------------------------------------------
+// Helper: ubah berbagai bentuk link Google Drive jadi link gambar langsung
+// -------------------------------------------------------
+function convertDriveLink(link) {
+  if (!link) return "";
+  link = link.toString().trim();
+  if (!link) return "";
+
+  var id = "";
+
+  // Format: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  var match1 = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  // Format: https://drive.google.com/open?id=FILE_ID
+  var match2 = link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  // Format: kalau yang dimasukkan cuma ID-nya langsung
+  var match3 = link.match(/^[a-zA-Z0-9_-]{15,}$/);
+
+  if (match1) id = match1[1];
+  else if (match2) id = match2[1];
+  else if (match3) id = match3[0];
+
+  if (id) {
+    // Format "thumbnail" lebih stabil untuk ditampilkan di tag <img> dibanding uc?export=view,
+    // yang kadang gagal/redirect ke halaman peringatan virus scan untuk file berukuran besar.
+    return "https://drive.google.com/thumbnail?id=" + id + "&sz=w500";
+  }
+
+  // Kalau bukan format Drive yang dikenali, kembalikan link aslinya (misal sudah link gambar langsung)
+  return link;
+}
+
+// -------------------------------------------------------
+// Helper: ambil seluruh data siswa jadi map { namaUpper: {kelas, foto, uid} }
+// -------------------------------------------------------
+function getSiswaMap() {
+  var dataSiswa = sheetData.getDataRange().getValues();
+  var map = {};
+
+  for (var i = 1; i < dataSiswa.length; i++) {
+    var uid = dataSiswa[i][0];
+    var nama = dataSiswa[i][1];
+    var kelas = dataSiswa[i][2];
+    var fotoRaw = dataSiswa[i][KOLOM_FOTO_INDEX];
+
+    if (!nama) continue;
+
+    map[nama.toString().toUpperCase()] = {
+      uid: uid,
+      kelas: kelas,
+      foto: convertDriveLink(fotoRaw)
+    };
+  }
+
+  return map;
+}
+
+// 1. Fungsi GET: Untuk menampilkan data di Dashboard Web (index.html)
+function doGet(e) {
+  var data = sheetLog.getDataRange().getValues();
+  var siswaMap = getSiswaMap();
+  var rows = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var nama = data[i][0];
+    var infoSiswa = siswaMap[nama ? nama.toString().toUpperCase() : ""] || {};
+
+    rows.push({
+      nama: nama,
+      kelas: data[i][1],
+      waktu: Utilities.formatDate(new Date(data[i][2]), "GMT+7", "HH:mm:ss"),
+      status: data[i][3],
+      foto: infoSiswa.foto || ""
+    });
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(rows))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 2. Fungsi POST: Untuk menerima Tap dari ESP32
+function doPost(e) {
+  try {
+    var jsonData = JSON.parse(e.postData.contents);
+    var uid = jsonData.uid;
+
+    // Cari data siswa berdasarkan UID di sheet "DataSiswa"
+    var dataSiswa = sheetData.getDataRange().getValues();
+    var nama = "Unknown";
+    var kelas = "-";
+    var fotoRaw = "";
+
+    for (var i = 1; i < dataSiswa.length; i++) {
+      if (dataSiswa[i][0].toString().toUpperCase() == uid.toString().toUpperCase()) {
+        nama = dataSiswa[i][1];
+        kelas = dataSiswa[i][2];
+        fotoRaw = dataSiswa[i][KOLOM_FOTO_INDEX];
+        break;
+      }
+    }
+
+    var foto = convertDriveLink(fotoRaw);
+
+    // Tentukan waktu tap (pakai timezone GMT+7 agar akurat)
+    var waktu = new Date();
+    var jamStr = Utilities.formatDate(waktu, "GMT+7", "HH:mm:ss");
+    var jamNow = parseInt(Utilities.formatDate(waktu, "GMT+7", "H"));
+    var menitNow = parseInt(Utilities.formatDate(waktu, "GMT+7", "m"));
+
+    var totalMenitNow = (jamNow * 60) + menitNow;
+    var totalMenitTelat = (BATAS_JAM_TELAT * 60) + BATAS_MENIT_TELAT;
+    var totalMenitPulang = (BATAS_JAM_PULANG * 60) + BATAS_MENIT_PULANG;
+
+    // Tentukan status berdasarkan jam tap
+    var status;
+    if (totalMenitNow > totalMenitPulang) {
+      status = "Pulang";
+    } else if (totalMenitNow > totalMenitTelat) {
+      status = "Telat";
+    } else {
+      status = "Tepat Waktu";
+    }
+
+    // Simpan riwayat absensi ke sheet "Absensi"
+    sheetLog.appendRow([nama, kelas, waktu, status]);
+
+    // Highlight warna sesuai status
+    var lastRow = sheetLog.getLastRow();
+    var range = sheetLog.getRange(lastRow, 1, 1, 4);
+
+    if (status == "Telat") {
+      range.setBackground("#f4cccc");
+      range.setFontColor(null);
+    } else if (status == "Pulang") {
+      range.setBackground("#1c4587");
+      range.setFontColor("#ffffff");
+    } else {
+      range.setBackground("#d9ead3");
+      range.setFontColor(null);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "success",
+      "nama": nama,
+      "uid": uid,
+      "absensi_status": status,
+      "jam": jamStr,
+      "foto": foto
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (f) {
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": f.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
