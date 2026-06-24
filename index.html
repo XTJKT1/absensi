@@ -62,7 +62,7 @@
   }
   main{
     padding:24px clamp(16px,4vw,48px) 60px;
-    max-width:1100px;
+    max-width:1150px;
     margin:0 auto;
   }
   .stats{
@@ -92,7 +92,7 @@
   .stat.hadir .num{color:var(--hadir);}
   .stat.telat .num{color:var(--telat);}
   .stat.pulang .num{color:var(--pulang);}
-
+ 
   .panel{
     background:var(--panel);
     border:1px solid var(--line);
@@ -124,7 +124,7 @@
     100%{box-shadow:0 0 0 0 rgba(61,220,132,0);}
   }
   .live-label{font-size:12px;color:var(--muted);}
-
+ 
   table{
     width:100%;
     border-collapse:collapse;
@@ -139,9 +139,10 @@
     border-bottom:1px solid var(--line);
   }
   tbody td{
-    padding:13px 20px;
+    padding:11px 20px;
     border-bottom:1px solid var(--line);
     font-size:14px;
+    vertical-align:middle;
   }
   tbody tr:last-child td{border-bottom:none;}
   tbody tr.row-new{
@@ -151,6 +152,38 @@
     0%{background:rgba(255,255,255,.08);}
     100%{background:transparent;}
   }
+ 
+  /* Avatar siswa */
+  .person{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .avatar{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    object-fit:cover;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .avatar-fallback{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:700;
+    color:var(--accent);
+    flex-shrink:0;
+  }
+  .person-name{font-weight:600;}
+ 
   .badge{
     display:inline-block;
     padding:4px 11px;
@@ -162,13 +195,13 @@
   .badge.telat{background:var(--telat-bg);color:var(--telat);}
   .badge.pulang{background:var(--pulang-bg);color:var(--pulang);}
   .badge.lain{background:var(--panel-2);color:var(--muted);}
-
+ 
   .empty{
     padding:50px 20px;
     text-align:center;
     color:var(--muted);
   }
-
+ 
   /* Toast notifications */
   #toastWrap{
     position:fixed;
@@ -184,13 +217,40 @@
     background:var(--panel-2);
     border:1px solid var(--line);
     border-left:5px solid var(--hadir);
-    border-radius:12px;
+    border-radius:14px;
     padding:14px 16px;
     box-shadow:0 12px 30px rgba(0,0,0,.45);
     animation:slidein .35s ease;
+    display:flex;
+    align-items:center;
+    gap:13px;
   }
   .toast.telat{border-left-color:var(--telat);}
   .toast.pulang{border-left-color:var(--pulang);}
+  .toast .t-avatar{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    object-fit:cover;
+    flex-shrink:0;
+    background:var(--panel);
+    border:1px solid var(--line);
+  }
+  .toast .t-avatar-fallback{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+    font-weight:700;
+    color:var(--accent);
+    flex-shrink:0;
+  }
+  .toast .t-body{min-width:0;}
   .toast .t-status{
     font-size:11px;
     text-transform:uppercase;
@@ -212,20 +272,25 @@
     to{opacity:0;transform:translateX(20px);}
   }
   .toast.leaving{animation:fadeout .35s ease forwards;}
-
+ 
   @media (max-width:640px){
     thead{display:none;}
     table, tbody, tr, td{display:block;width:100%;}
     tbody tr{padding:12px 20px;}
-    tbody td{border:none;padding:3px 0;}
-    tbody td:first-child{font-weight:700;font-size:15px;}
+    tbody td{border:none;padding:4px 0;}
+    tbody td:nth-child(2),
+    tbody td:nth-child(3){
+      padding-left:50px;
+      font-size:13px;
+      color:var(--muted);
+    }
   }
 </style>
 </head>
 <body>
-
+ 
 <div id="toastWrap"></div>
-
+ 
 <header>
   <div>
     <div class="brand-eyebrow">Sistem Tap Kartu</div>
@@ -236,9 +301,9 @@
     <span id="liveClock">--:--:--</span>
   </div>
 </header>
-
+ 
 <main>
-
+ 
   <div class="stats">
     <div class="stat hadir">
       <div class="num" id="countHadir">0</div>
@@ -257,7 +322,7 @@
       <div class="label">Total Tap</div>
     </div>
   </div>
-
+ 
   <div class="panel">
     <div class="panel-head">
       <h2>Riwayat Tap Terbaru</h2>
@@ -267,20 +332,20 @@
       <div class="empty">Menunggu data tap kartu...</div>
     </div>
   </div>
-
+ 
 </main>
-
+ 
 <script>
 // =======================================================
 // GANTI URL INI dengan URL Web App Apps Script kamu
 // =======================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbwca-F5VZTaE_CpAQfmzucvG1AHJ5ItJtcMbCZyK43zLTU5ng3jKNIUFf4uIpTtobgd/exec";
-
+ 
 const POLL_INTERVAL_MS = 4000; // seberapa sering cek data baru
-
-let knownCount = 0; // jumlah baris yang sudah pernah dilihat
+ 
+let knownCount = 0;
 let firstLoad = true;
-
+ 
 function statusKey(status){
   const s = (status || "").toLowerCase();
   if(s.includes("telat")) return "telat";
@@ -288,27 +353,46 @@ function statusKey(status){
   if(s.includes("tepat")) return "hadir";
   return "lain";
 }
-
+ 
 function statusLabel(status){
   return status || "-";
 }
-
+ 
+function initials(nama){
+  if(!nama) return "?";
+  const parts = String(nama).trim().split(/\s+/);
+  if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+ 
+// Markup avatar: <img> jika ada foto, fallback inisial jika tidak ada / gagal dimuat
+function avatarMarkup(nama, foto, sizeClass, fallbackClass){
+  const safeName = escapeHtml(nama);
+  const ini = escapeHtml(initials(nama));
+ 
+  if(foto){
+    const safeFoto = escapeHtml(foto);
+    return `<img src="${safeFoto}" alt="${safeName}" class="${sizeClass}"
+              onerror="this.outerHTML='<div class=&quot;${fallbackClass}&quot;>${ini}</div>'">`;
+  }
+  return `<div class="${fallbackClass}">${ini}</div>`;
+}
+ 
 function renderTable(rows){
   const wrap = document.getElementById("tableWrap");
-
+ 
   if(!rows.length){
     wrap.innerHTML = '<div class="empty">Menunggu data tap kartu...</div>';
     return;
   }
-
-  // tampilkan terbaru di atas, batasi 30 baris agar ringan
+ 
   const recent = rows.slice(-30).reverse();
-
+ 
   let html = `
     <table>
       <thead>
         <tr>
-          <th>Nama</th>
+          <th>Siswa</th>
           <th>Kelas</th>
           <th>Waktu</th>
           <th>Status</th>
@@ -316,24 +400,31 @@ function renderTable(rows){
       </thead>
       <tbody>
   `;
-
+ 
   recent.forEach((r, idx) => {
     const key = statusKey(r.status);
     const isNew = !firstLoad && idx === 0;
+    const avatar = avatarMarkup(r.nama, r.foto, "avatar", "avatar-fallback");
+ 
     html += `
       <tr class="${isNew ? 'row-new' : ''}">
-        <td>${escapeHtml(r.nama)}</td>
+        <td>
+          <div class="person">
+            ${avatar}
+            <span class="person-name">${escapeHtml(r.nama)}</span>
+          </div>
+        </td>
         <td>${escapeHtml(r.kelas)}</td>
         <td>${escapeHtml(r.waktu)}</td>
         <td><span class="badge ${key}">${escapeHtml(statusLabel(r.status))}</span></td>
       </tr>
     `;
   });
-
+ 
   html += "</tbody></table>";
   wrap.innerHTML = html;
 }
-
+ 
 function updateStats(rows){
   let hadir = 0, telat = 0, pulang = 0;
   rows.forEach(r => {
@@ -347,76 +438,81 @@ function updateStats(rows){
   document.getElementById("countPulang").textContent = pulang;
   document.getElementById("countTotal").textContent = rows.length;
 }
-
+ 
 function showToast(row){
   const key = statusKey(row.status);
   const wrap = document.getElementById("toastWrap");
-
+ 
+  const avatar = avatarMarkup(row.nama, row.foto, "t-avatar", "t-avatar-fallback");
+ 
   const toast = document.createElement("div");
   toast.className = `toast ${key}`;
   toast.innerHTML = `
-    <div class="t-status">${escapeHtml(statusLabel(row.status))}</div>
-    <div class="t-nama">${escapeHtml(row.nama)}</div>
-    <div class="t-meta">${escapeHtml(row.kelas)} &middot; ${escapeHtml(row.waktu)}</div>
+    ${avatar}
+    <div class="t-body">
+      <div class="t-status">${escapeHtml(statusLabel(row.status))}</div>
+      <div class="t-nama">${escapeHtml(row.nama)}</div>
+      <div class="t-meta">${escapeHtml(row.kelas)} &middot; ${escapeHtml(row.waktu)}</div>
+    </div>
   `;
   wrap.appendChild(toast);
-
+ 
   setTimeout(() => {
     toast.classList.add("leaving");
     setTimeout(() => toast.remove(), 350);
-  }, 5000);
+  }, 5500);
 }
-
+ 
 function escapeHtml(str){
   return String(str ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
-
+ 
 async function fetchData(){
   try{
     const res = await fetch(API_URL, { cache: "no-store" });
     const rows = await res.json();
-
+ 
     if(!Array.isArray(rows)) return;
-
+ 
     renderTable(rows);
     updateStats(rows);
-
+ 
     if(firstLoad){
       knownCount = rows.length;
       firstLoad = false;
       return;
     }
-
-    // Jika ada baris baru dibanding sebelumnya, tampilkan notifikasi untuk tiap baris baru
+ 
     if(rows.length > knownCount){
       const newRows = rows.slice(knownCount);
       newRows.forEach(showToast);
       knownCount = rows.length;
     } else if(rows.length < knownCount){
-      // sheet mungkin direset manual, sinkronkan ulang
       knownCount = rows.length;
     }
-
+ 
   }catch(err){
     console.error("Gagal mengambil data absensi:", err);
   }
 }
-
+ 
 function tickClock(){
   const now = new Date();
   document.getElementById("liveClock").textContent =
     now.toLocaleTimeString("id-ID", { hour12:false });
 }
-
+ 
 tickClock();
 setInterval(tickClock, 1000);
-
+ 
 fetchData();
 setInterval(fetchData, POLL_INTERVAL_MS);
 </script>
-
+ 
 </body>
 </html>
+ 
