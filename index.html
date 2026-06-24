@@ -62,7 +62,7 @@
   }
   main{
     padding:24px clamp(16px,4vw,48px) 60px;
-    max-width:1150px;
+    max-width:1100px;
     margin:0 auto;
   }
   .stats{
@@ -92,7 +92,7 @@
   .stat.hadir .num{color:var(--hadir);}
   .stat.telat .num{color:var(--telat);}
   .stat.pulang .num{color:var(--pulang);}
- 
+
   .panel{
     background:var(--panel);
     border:1px solid var(--line);
@@ -124,7 +124,7 @@
     100%{box-shadow:0 0 0 0 rgba(61,220,132,0);}
   }
   .live-label{font-size:12px;color:var(--muted);}
- 
+
   table{
     width:100%;
     border-collapse:collapse;
@@ -139,10 +139,9 @@
     border-bottom:1px solid var(--line);
   }
   tbody td{
-    padding:11px 20px;
+    padding:13px 20px;
     border-bottom:1px solid var(--line);
     font-size:14px;
-    vertical-align:middle;
   }
   tbody tr:last-child td{border-bottom:none;}
   tbody tr.row-new{
@@ -152,38 +151,8 @@
     0%{background:rgba(255,255,255,.08);}
     100%{background:transparent;}
   }
- 
-  /* Avatar siswa */
-  .person{
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
-  .avatar{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    object-fit:cover;
-    background:var(--panel-2);
-    border:1px solid var(--line);
-    flex-shrink:0;
-  }
-  .avatar-fallback{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    background:var(--panel-2);
-    border:1px solid var(--line);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:13px;
-    font-weight:700;
-    color:var(--accent);
-    flex-shrink:0;
-  }
   .person-name{font-weight:600;}
- 
+
   .badge{
     display:inline-block;
     padding:4px 11px;
@@ -195,102 +164,130 @@
   .badge.telat{background:var(--telat-bg);color:var(--telat);}
   .badge.pulang{background:var(--pulang-bg);color:var(--pulang);}
   .badge.lain{background:var(--panel-2);color:var(--muted);}
- 
+
   .empty{
     padding:50px 20px;
     text-align:center;
     color:var(--muted);
   }
- 
-  /* Toast notifications */
-  #toastWrap{
+
+  /* ===================== POPUP OVERLAY TENGAH ===================== */
+  #overlayBackdrop{
     position:fixed;
-    top:20px;
-    right:20px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    z-index:999;
-    max-width:340px;
-  }
-  .toast{
-    background:var(--panel-2);
-    border:1px solid var(--line);
-    border-left:5px solid var(--hadir);
-    border-radius:14px;
-    padding:14px 16px;
-    box-shadow:0 12px 30px rgba(0,0,0,.45);
-    animation:slidein .35s ease;
-    display:flex;
-    align-items:center;
-    gap:13px;
-  }
-  .toast.telat{border-left-color:var(--telat);}
-  .toast.pulang{border-left-color:var(--pulang);}
-  .toast .t-avatar{
-    width:52px;
-    height:52px;
-    border-radius:50%;
-    object-fit:cover;
-    flex-shrink:0;
-    background:var(--panel);
-    border:1px solid var(--line);
-  }
-  .toast .t-avatar-fallback{
-    width:52px;
-    height:52px;
-    border-radius:50%;
-    background:var(--panel);
-    border:1px solid var(--line);
+    inset:0;
+    background:rgba(5,6,9,.72);
+    backdrop-filter:blur(4px);
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:17px;
+    z-index:999;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease;
+    padding:20px;
+  }
+  #overlayBackdrop.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .overlay-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:26px;
+    padding:36px 40px 32px;
+    width:100%;
+    max-width:360px;
+    text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.55);
+    border-top:6px solid var(--hadir);
+    transform:scale(.85) translateY(10px);
+    opacity:0;
+    transition:transform .32s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+  }
+  #overlayBackdrop.show .overlay-card{
+    transform:scale(1) translateY(0);
+    opacity:1;
+  }
+  .overlay-card.telat{border-top-color:var(--telat);}
+  .overlay-card.pulang{border-top-color:var(--pulang);}
+
+  .overlay-photo{
+    width:160px;
+    height:160px;
+    border-radius:50%;
+    object-fit:cover;
+    margin:0 auto 20px;
+    display:block;
+    border:4px solid var(--panel-2);
+  }
+  .overlay-photo-fallback{
+    width:160px;
+    height:160px;
+    border-radius:50%;
+    margin:0 auto 20px;
+    background:var(--panel-2);
+    border:4px solid var(--panel-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:48px;
     font-weight:700;
     color:var(--accent);
-    flex-shrink:0;
   }
-  .toast .t-body{min-width:0;}
-  .toast .t-status{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.08em;
+
+  .overlay-status{
+    display:inline-block;
+    padding:6px 18px;
+    border-radius:999px;
+    font-size:13px;
     font-weight:700;
-    margin-bottom:3px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:14px;
   }
-  .toast.hadir .t-status{color:var(--hadir);}
-  .toast.telat .t-status{color:var(--telat);}
-  .toast.pulang .t-status{color:var(--pulang);}
-  .toast .t-nama{font-size:16px;font-weight:700;}
-  .toast .t-meta{font-size:13px;color:var(--muted);margin-top:2px;}
-  @keyframes slidein{
-    from{transform:translateX(40px);opacity:0;}
-    to{transform:translateX(0);opacity:1;}
+  .overlay-status.hadir{background:var(--hadir-bg);color:var(--hadir);}
+  .overlay-status.telat{background:var(--telat-bg);color:var(--telat);}
+  .overlay-status.pulang{background:var(--pulang-bg);color:var(--pulang);}
+
+  .overlay-nama{
+    font-size:26px;
+    font-weight:800;
+    margin-bottom:6px;
   }
-  @keyframes fadeout{
-    from{opacity:1;}
-    to{opacity:0;transform:translateX(20px);}
+  .overlay-kelas{
+    font-size:15px;
+    color:var(--muted);
+    margin-bottom:4px;
   }
-  .toast.leaving{animation:fadeout .35s ease forwards;}
- 
+  .overlay-waktu{
+    font-size:14px;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+
   @media (max-width:640px){
     thead{display:none;}
     table, tbody, tr, td{display:block;width:100%;}
     tbody tr{padding:12px 20px;}
-    tbody td{border:none;padding:4px 0;}
-    tbody td:nth-child(2),
-    tbody td:nth-child(3){
-      padding-left:50px;
-      font-size:13px;
-      color:var(--muted);
-    }
+    tbody td{border:none;padding:3px 0;}
+    tbody td:first-child{font-weight:700;font-size:15px;}
   }
 </style>
 </head>
 <body>
- 
-<div id="toastWrap"></div>
- 
+
+<!-- Popup overlay foto saat tap -->
+<div id="overlayBackdrop">
+  <div class="overlay-card" id="overlayCard">
+    <img id="overlayPhoto" class="overlay-photo" style="display:none;">
+    <div id="overlayPhotoFallback" class="overlay-photo-fallback" style="display:none;"></div>
+    <div class="overlay-status" id="overlayStatus">-</div>
+    <div class="overlay-nama" id="overlayNama">-</div>
+    <div class="overlay-kelas" id="overlayKelas">-</div>
+    <div class="overlay-waktu" id="overlayWaktu">-</div>
+  </div>
+</div>
+
 <header>
   <div>
     <div class="brand-eyebrow">Sistem Tap Kartu</div>
@@ -301,9 +298,9 @@
     <span id="liveClock">--:--:--</span>
   </div>
 </header>
- 
+
 <main>
- 
+
   <div class="stats">
     <div class="stat hadir">
       <div class="num" id="countHadir">0</div>
@@ -322,7 +319,7 @@
       <div class="label">Total Tap</div>
     </div>
   </div>
- 
+
   <div class="panel">
     <div class="panel-head">
       <h2>Riwayat Tap Terbaru</h2>
@@ -332,20 +329,22 @@
       <div class="empty">Menunggu data tap kartu...</div>
     </div>
   </div>
- 
+
 </main>
- 
+
 <script>
 // =======================================================
 // GANTI URL INI dengan URL Web App Apps Script kamu
 // =======================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzkyVaBfBtYvYEJMB2NVmVDKun4KOR8yHcLTp9oOd7hYR5G0jkrHjL-GJG8wnUwyJcG/exec";
- 
-const POLL_INTERVAL_MS = 4000; // seberapa sering cek data baru
- 
+
+const POLL_INTERVAL_MS = 4000;   // seberapa sering cek data baru
+const OVERLAY_DURATION_MS = 4500; // berapa lama popup tampil sebelum hilang otomatis
+
 let knownCount = 0;
 let firstLoad = true;
- 
+let overlayTimer = null;
+
 function statusKey(status){
   const s = (status || "").toLowerCase();
   if(s.includes("telat")) return "telat";
@@ -353,46 +352,41 @@ function statusKey(status){
   if(s.includes("tepat")) return "hadir";
   return "lain";
 }
- 
+
 function statusLabel(status){
   return status || "-";
 }
- 
+
 function initials(nama){
   if(!nama) return "?";
   const parts = String(nama).trim().split(/\s+/);
   if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
- 
-// Markup avatar: <img> jika ada foto, fallback inisial jika tidak ada / gagal dimuat
-function avatarMarkup(nama, foto, sizeClass, fallbackClass){
-  const safeName = escapeHtml(nama);
-  const ini = escapeHtml(initials(nama));
- 
-  if(foto){
-    const safeFoto = escapeHtml(foto);
-    return `<img src="${safeFoto}" alt="${safeName}" class="${sizeClass}"
-              onerror="this.outerHTML='<div class=&quot;${fallbackClass}&quot;>${ini}</div>'">`;
-  }
-  return `<div class="${fallbackClass}">${ini}</div>`;
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
- 
+
 function renderTable(rows){
   const wrap = document.getElementById("tableWrap");
- 
+
   if(!rows.length){
     wrap.innerHTML = '<div class="empty">Menunggu data tap kartu...</div>';
     return;
   }
- 
+
   const recent = rows.slice(-30).reverse();
- 
+
   let html = `
     <table>
       <thead>
         <tr>
-          <th>Siswa</th>
+          <th>Nama</th>
           <th>Kelas</th>
           <th>Waktu</th>
           <th>Status</th>
@@ -400,31 +394,24 @@ function renderTable(rows){
       </thead>
       <tbody>
   `;
- 
+
   recent.forEach((r, idx) => {
     const key = statusKey(r.status);
     const isNew = !firstLoad && idx === 0;
-    const avatar = avatarMarkup(r.nama, r.foto, "avatar", "avatar-fallback");
- 
     html += `
       <tr class="${isNew ? 'row-new' : ''}">
-        <td>
-          <div class="person">
-            ${avatar}
-            <span class="person-name">${escapeHtml(r.nama)}</span>
-          </div>
-        </td>
+        <td><span class="person-name">${escapeHtml(r.nama)}</span></td>
         <td>${escapeHtml(r.kelas)}</td>
         <td>${escapeHtml(r.waktu)}</td>
         <td><span class="badge ${key}">${escapeHtml(statusLabel(r.status))}</span></td>
       </tr>
     `;
   });
- 
+
   html += "</tbody></table>";
   wrap.innerHTML = html;
 }
- 
+
 function updateStats(rows){
   let hadir = 0, telat = 0, pulang = 0;
   rows.forEach(r => {
@@ -438,81 +425,104 @@ function updateStats(rows){
   document.getElementById("countPulang").textContent = pulang;
   document.getElementById("countTotal").textContent = rows.length;
 }
- 
-function showToast(row){
+
+// ===================== POPUP OVERLAY =====================
+function showOverlay(row){
   const key = statusKey(row.status);
-  const wrap = document.getElementById("toastWrap");
- 
-  const avatar = avatarMarkup(row.nama, row.foto, "t-avatar", "t-avatar-fallback");
- 
-  const toast = document.createElement("div");
-  toast.className = `toast ${key}`;
-  toast.innerHTML = `
-    ${avatar}
-    <div class="t-body">
-      <div class="t-status">${escapeHtml(statusLabel(row.status))}</div>
-      <div class="t-nama">${escapeHtml(row.nama)}</div>
-      <div class="t-meta">${escapeHtml(row.kelas)} &middot; ${escapeHtml(row.waktu)}</div>
-    </div>
-  `;
-  wrap.appendChild(toast);
- 
-  setTimeout(() => {
-    toast.classList.add("leaving");
-    setTimeout(() => toast.remove(), 350);
-  }, 5500);
+
+  const backdrop = document.getElementById("overlayBackdrop");
+  const card = document.getElementById("overlayCard");
+  const photo = document.getElementById("overlayPhoto");
+  const photoFallback = document.getElementById("overlayPhotoFallback");
+
+  // Reset class status di kartu
+  card.classList.remove("telat", "pulang");
+  if(key === "telat") card.classList.add("telat");
+  else if(key === "pulang") card.classList.add("pulang");
+
+  // Foto / fallback inisial
+  if(row.foto){
+    photo.src = row.foto;
+    photo.style.display = "block";
+    photoFallback.style.display = "none";
+    photo.onerror = () => {
+      photo.style.display = "none";
+      photoFallback.style.display = "flex";
+      photoFallback.textContent = initials(row.nama);
+    };
+  } else {
+    photo.style.display = "none";
+    photoFallback.style.display = "flex";
+    photoFallback.textContent = initials(row.nama);
+  }
+
+  document.getElementById("overlayStatus").textContent = statusLabel(row.status);
+  document.getElementById("overlayStatus").className = `overlay-status ${key}`;
+  document.getElementById("overlayNama").textContent = row.nama || "-";
+  document.getElementById("overlayKelas").textContent = row.kelas || "-";
+  document.getElementById("overlayWaktu").textContent = row.waktu || "-";
+
+  backdrop.classList.add("show");
+
+  clearTimeout(overlayTimer);
+  overlayTimer = setTimeout(hideOverlay, OVERLAY_DURATION_MS);
 }
- 
-function escapeHtml(str){
-  return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+
+function hideOverlay(){
+  document.getElementById("overlayBackdrop").classList.remove("show");
 }
- 
+
+// klik di luar kartu untuk tutup manual
+document.getElementById("overlayBackdrop").addEventListener("click", (e) => {
+  if(e.target.id === "overlayBackdrop"){
+    clearTimeout(overlayTimer);
+    hideOverlay();
+  }
+});
+
+// ===================== FETCH DATA =====================
 async function fetchData(){
   try{
     const res = await fetch(API_URL, { cache: "no-store" });
     const rows = await res.json();
- 
+
     if(!Array.isArray(rows)) return;
- 
+
     renderTable(rows);
     updateStats(rows);
- 
+
     if(firstLoad){
       knownCount = rows.length;
       firstLoad = false;
       return;
     }
- 
+
     if(rows.length > knownCount){
       const newRows = rows.slice(knownCount);
-      newRows.forEach(showToast);
+      // tampilkan popup untuk tap terbaru (yang paling akhir jika ada beberapa)
+      showOverlay(newRows[newRows.length - 1]);
       knownCount = rows.length;
     } else if(rows.length < knownCount){
       knownCount = rows.length;
     }
- 
+
   }catch(err){
     console.error("Gagal mengambil data absensi:", err);
   }
 }
- 
+
 function tickClock(){
   const now = new Date();
   document.getElementById("liveClock").textContent =
     now.toLocaleTimeString("id-ID", { hour12:false });
 }
- 
+
 tickClock();
 setInterval(tickClock, 1000);
- 
+
 fetchData();
 setInterval(fetchData, POLL_INTERVAL_MS);
 </script>
- 
+
 </body>
 </html>
- 
