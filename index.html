@@ -3,228 +3,419 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Scan Kartu Siswa</title>
-
+<title>Dashboard Absensi NFC</title>
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Segoe UI',sans-serif;
-}
-
-body{
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel-2:#1d2129;
+    --line:#2a2e38;
+    --text:#eef0f4;
+    --muted:#8b919d;
+    --hadir:#3ddc84;
+    --hadir-bg:#143324;
+    --telat:#ff5c5c;
+    --telat-bg:#3a1414;
+    --pulang:#4d8cff;
+    --pulang-bg:#10203a;
+    --accent:#ffb648;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
     min-height:100vh;
-    background:linear-gradient(135deg,#ff9a9e,#fad0c4,#a18cd1);
+  }
+  header{
+    padding:28px clamp(16px,4vw,48px) 18px;
     display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:20px;
-}
-
-.container{
-    width:100%;
-    max-width:500px;
-}
-
-.card{
-    background:white;
-    border-radius:30px;
-    padding:30px;
-    text-align:center;
-    box-shadow:0 15px 40px rgba(0,0,0,0.2);
-}
-
-.title{
-    font-size:32px;
-    font-weight:bold;
-    color:#6c3cff;
-    margin-bottom:15px;
-}
-
-.subtitle{
-    color:#666;
-    margin-bottom:25px;
-}
-
-.photo{
-    width:220px;
-    height:220px;
-    border-radius:50%;
-    object-fit:cover;
-    border:8px solid #6c3cff;
-    margin:auto;
-    display:none;
-}
-
-.nama{
-    font-size:30px;
-    font-weight:bold;
-    color:#333;
-    margin-top:20px;
-}
-
-.kelas{
-    font-size:22px;
-    color:#666;
-    margin-top:8px;
-}
-
-.status{
-    margin-top:20px;
-    padding:12px;
-    border-radius:15px;
-    font-size:22px;
-    font-weight:bold;
-}
-
-.hadir{
-    background:#d4f8d4;
-    color:#008000;
-}
-
-.tidak{
-    background:#ffd6d6;
-    color:#d00000;
-}
-
-.scan-box{
-    margin-top:25px;
-}
-
-input{
-    width:100%;
-    padding:15px;
-    font-size:18px;
-    border-radius:15px;
-    border:2px solid #ddd;
-    text-align:center;
-}
-
-.footer{
-    margin-top:15px;
-    color:#888;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand-eyebrow{
+    font-size:12px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:clamp(22px,3vw,30px);
+    font-weight:700;
+  }
+  .clock{
+    text-align:right;
+    color:var(--muted);
     font-size:14px;
-}
+  }
+  .clock span{
+    display:block;
+    font-size:clamp(20px,3vw,26px);
+    color:var(--text);
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  main{
+    padding:24px clamp(16px,4vw,48px) 60px;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+  }
+  .stat .num{
+    font-size:28px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat .label{
+    font-size:12px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-top:4px;
+  }
+  .stat.hadir .num{color:var(--hadir);}
+  .stat.telat .num{color:var(--telat);}
+  .stat.pulang .num{color:var(--pulang);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:16px 20px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .panel-head h2{
+    font-size:15px;
+    font-weight:600;
+  }
+  .live-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--hadir);
+    display:inline-block;
+    margin-right:6px;
+    box-shadow:0 0 0 0 rgba(61,220,132,.6);
+    animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(61,220,132,.55);}
+    70%{box-shadow:0 0 0 7px rgba(61,220,132,0);}
+    100%{box-shadow:0 0 0 0 rgba(61,220,132,0);}
+  }
+  .live-label{font-size:12px;color:var(--muted);}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  thead th{
+    text-align:left;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--muted);
+    padding:10px 20px;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:13px 20px;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.row-new{
+    animation:flashin .9s ease;
+  }
+  @keyframes flashin{
+    0%{background:rgba(255,255,255,.08);}
+    100%{background:transparent;}
+  }
+  .badge{
+    display:inline-block;
+    padding:4px 11px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+  }
+  .badge.hadir{background:var(--hadir-bg);color:var(--hadir);}
+  .badge.telat{background:var(--telat-bg);color:var(--telat);}
+  .badge.pulang{background:var(--pulang-bg);color:var(--pulang);}
+  .badge.lain{background:var(--panel-2);color:var(--muted);}
+
+  .empty{
+    padding:50px 20px;
+    text-align:center;
+    color:var(--muted);
+  }
+
+  /* Toast notifications */
+  #toastWrap{
+    position:fixed;
+    top:20px;
+    right:20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    z-index:999;
+    max-width:340px;
+  }
+  .toast{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-left:5px solid var(--hadir);
+    border-radius:12px;
+    padding:14px 16px;
+    box-shadow:0 12px 30px rgba(0,0,0,.45);
+    animation:slidein .35s ease;
+  }
+  .toast.telat{border-left-color:var(--telat);}
+  .toast.pulang{border-left-color:var(--pulang);}
+  .toast .t-status{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-weight:700;
+    margin-bottom:3px;
+  }
+  .toast.hadir .t-status{color:var(--hadir);}
+  .toast.telat .t-status{color:var(--telat);}
+  .toast.pulang .t-status{color:var(--pulang);}
+  .toast .t-nama{font-size:16px;font-weight:700;}
+  .toast .t-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  @keyframes slidein{
+    from{transform:translateX(40px);opacity:0;}
+    to{transform:translateX(0);opacity:1;}
+  }
+  @keyframes fadeout{
+    from{opacity:1;}
+    to{opacity:0;transform:translateX(20px);}
+  }
+  .toast.leaving{animation:fadeout .35s ease forwards;}
+
+  @media (max-width:640px){
+    thead{display:none;}
+    table, tbody, tr, td{display:block;width:100%;}
+    tbody tr{padding:12px 20px;}
+    tbody td{border:none;padding:3px 0;}
+    tbody td:first-child{font-weight:700;font-size:15px;}
+  }
 </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
+<div id="toastWrap"></div>
 
-        <div class="title">🎓 Scan Kartu Siswa</div>
-        <div class="subtitle">
-            Tempelkan kartu untuk menampilkan data
-        </div>
+<header>
+  <div>
+    <div class="brand-eyebrow">Sistem Tap Kartu</div>
+    <h1>Dashboard Absensi</h1>
+  </div>
+  <div class="clock">
+    Waktu sekarang
+    <span id="liveClock">--:--:--</span>
+  </div>
+</header>
 
-        <img id="foto" class="photo">
+<main>
 
-        <div id="nama" class="nama">Menunggu Scan...</div>
-
-        <div id="kelas" class="kelas"></div>
-
-        <div id="status"></div>
-
-        <div class="scan-box">
-            <input
-                type="text"
-                id="uid"
-                placeholder="Scan kartu..."
-                autofocus
-            >
-        </div>
-
-        <div class="footer">
-            RFID / NFC Attendance System
-        </div>
-
+  <div class="stats">
+    <div class="stat hadir">
+      <div class="num" id="countHadir">0</div>
+      <div class="label">Tepat Waktu</div>
     </div>
-</div>
+    <div class="stat telat">
+      <div class="num" id="countTelat">0</div>
+      <div class="label">Telat</div>
+    </div>
+    <div class="stat pulang">
+      <div class="num" id="countPulang">0</div>
+      <div class="label">Pulang</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="countTotal">0</div>
+      <div class="label">Total Tap</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Riwayat Tap Terbaru</h2>
+      <div class="live-label"><span class="live-dot"></span>Live</div>
+    </div>
+    <div id="tableWrap">
+      <div class="empty">Menunggu data tap kartu...</div>
+    </div>
+  </div>
+
+</main>
 
 <script>
-
+// =======================================================
+// GANTI URL INI dengan URL Web App Apps Script kamu
+// =======================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbwca-F5VZTaE_CpAQfmzucvG1AHJ5ItJtcMbCZyK43zLTU5ng3jKNIUFf4uIpTtobgd/exec";
 
-const uidInput = document.getElementById("uid");
+const POLL_INTERVAL_MS = 4000; // seberapa sering cek data baru
 
-uidInput.addEventListener("change", scanCard);
+let knownCount = 0; // jumlah baris yang sudah pernah dilihat
+let firstLoad = true;
 
-async function scanCard(){
-
-    const uid = uidInput.value.trim();
-
-    if(!uid) return;
-
-    try{
-
-        const response = await fetch(
-            `${API_URL}?uid=${encodeURIComponent(uid)}`
-        );
-
-        const data = await response.json();
-
-        /*
-        Format JSON dari Apps Script:
-
-        {
-          "status":"Hadir",
-          "nama":"Budi",
-          "kelas":"XII IPA 1",
-          "foto":"https://....jpg"
-        }
-        */
-
-        document.getElementById("nama").innerText =
-            data.nama || "Tidak ditemukan";
-
-        document.getElementById("kelas").innerText =
-            data.kelas || "";
-
-        const foto = document.getElementById("foto");
-
-        if(data.foto){
-            foto.src = data.foto;
-            foto.style.display = "block";
-        }else{
-            foto.style.display = "none";
-        }
-
-        const statusDiv =
-            document.getElementById("status");
-
-        statusDiv.innerText =
-            data.status || "";
-
-        if(
-            String(data.status)
-            .toLowerCase()
-            .includes("hadir")
-        ){
-            statusDiv.className =
-                "status hadir";
-        }else{
-            statusDiv.className =
-                "status tidak";
-        }
-
-    }catch(err){
-
-        document.getElementById("nama")
-            .innerText = "❌ Gagal mengambil data";
-
-        console.error(err);
-    }
-
-    uidInput.value = "";
-    uidInput.focus();
+function statusKey(status){
+  const s = (status || "").toLowerCase();
+  if(s.includes("telat")) return "telat";
+  if(s.includes("pulang")) return "pulang";
+  if(s.includes("tepat")) return "hadir";
+  return "lain";
 }
 
-setInterval(()=>{
-    uidInput.focus();
-},1000);
+function statusLabel(status){
+  return status || "-";
+}
 
+function renderTable(rows){
+  const wrap = document.getElementById("tableWrap");
+
+  if(!rows.length){
+    wrap.innerHTML = '<div class="empty">Menunggu data tap kartu...</div>';
+    return;
+  }
+
+  // tampilkan terbaru di atas, batasi 30 baris agar ringan
+  const recent = rows.slice(-30).reverse();
+
+  let html = `
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Kelas</th>
+          <th>Waktu</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  recent.forEach((r, idx) => {
+    const key = statusKey(r.status);
+    const isNew = !firstLoad && idx === 0;
+    html += `
+      <tr class="${isNew ? 'row-new' : ''}">
+        <td>${escapeHtml(r.nama)}</td>
+        <td>${escapeHtml(r.kelas)}</td>
+        <td>${escapeHtml(r.waktu)}</td>
+        <td><span class="badge ${key}">${escapeHtml(statusLabel(r.status))}</span></td>
+      </tr>
+    `;
+  });
+
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+}
+
+function updateStats(rows){
+  let hadir = 0, telat = 0, pulang = 0;
+  rows.forEach(r => {
+    const key = statusKey(r.status);
+    if(key === "hadir") hadir++;
+    else if(key === "telat") telat++;
+    else if(key === "pulang") pulang++;
+  });
+  document.getElementById("countHadir").textContent = hadir;
+  document.getElementById("countTelat").textContent = telat;
+  document.getElementById("countPulang").textContent = pulang;
+  document.getElementById("countTotal").textContent = rows.length;
+}
+
+function showToast(row){
+  const key = statusKey(row.status);
+  const wrap = document.getElementById("toastWrap");
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${key}`;
+  toast.innerHTML = `
+    <div class="t-status">${escapeHtml(statusLabel(row.status))}</div>
+    <div class="t-nama">${escapeHtml(row.nama)}</div>
+    <div class="t-meta">${escapeHtml(row.kelas)} &middot; ${escapeHtml(row.waktu)}</div>
+  `;
+  wrap.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("leaving");
+    setTimeout(() => toast.remove(), 350);
+  }, 5000);
+}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+async function fetchData(){
+  try{
+    const res = await fetch(API_URL, { cache: "no-store" });
+    const rows = await res.json();
+
+    if(!Array.isArray(rows)) return;
+
+    renderTable(rows);
+    updateStats(rows);
+
+    if(firstLoad){
+      knownCount = rows.length;
+      firstLoad = false;
+      return;
+    }
+
+    // Jika ada baris baru dibanding sebelumnya, tampilkan notifikasi untuk tiap baris baru
+    if(rows.length > knownCount){
+      const newRows = rows.slice(knownCount);
+      newRows.forEach(showToast);
+      knownCount = rows.length;
+    } else if(rows.length < knownCount){
+      // sheet mungkin direset manual, sinkronkan ulang
+      knownCount = rows.length;
+    }
+
+  }catch(err){
+    console.error("Gagal mengambil data absensi:", err);
+  }
+}
+
+function tickClock(){
+  const now = new Date();
+  document.getElementById("liveClock").textContent =
+    now.toLocaleTimeString("id-ID", { hour12:false });
+}
+
+tickClock();
+setInterval(tickClock, 1000);
+
+fetchData();
+setInterval(fetchData, POLL_INTERVAL_MS);
 </script>
 
 </body>
